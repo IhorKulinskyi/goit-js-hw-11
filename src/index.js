@@ -32,12 +32,14 @@ function onSearchBtnClick(e) {
   }
 }
 
-function onLoadMoreBtnClick() {
-  imageApiService.fetchImages().then(r => onLoadMore(r));
+async function onLoadMoreBtnClick() {
+  const res = await imageApiService.fetchImages();
+  onLoadMore(res);
 }
 
-function searchImages() {
-  imageApiService.fetchImages().then(r => onSearch(r));
+async function searchImages() {
+  const res = await imageApiService.fetchImages();
+  onSearch(res);
 }
 
 function onSearch(r) {

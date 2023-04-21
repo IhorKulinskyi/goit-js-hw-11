@@ -1,5 +1,5 @@
 import ImageApiService from './js/ImageApiService';
-import { Notify } from 'notiflix';
+import NotificationApiService from './js/NotificationApiService';
 import SimpleLightbox from 'simplelightbox';
 import 'simplelightbox/dist/simple-lightbox.min.css';
 
@@ -9,22 +9,19 @@ const refs = {
   loadMoreBtn: document.querySelector('.load-more'),
 };
 
-const FAILURE_MESSAGE =
-  'Sorry, there are no images matching your search query. Please try again.';
+const notification = new NotificationApiService();
 
 const imageApiService = new ImageApiService();
 
 refs.searchForm.addEventListener('submit', onSearchBtnClick);
 refs.loadMoreBtn.addEventListener('click', onLoadMoreBtnClick);
 
-new SimpleLightbox('.gallery a');
-
 function onSearchBtnClick(e) {
   e.preventDefault();
   imageApiService.query = e.target.elements.searchQuery.value.trim();
   imageApiService.resetPageCounter();
   if (imageApiService.query === '') {
-    Notify.info('Search input is empty');
+    notification.showEmptyInput();
     return;
   } else {
     clearGallery();
@@ -44,15 +41,16 @@ async function searchImages() {
 
 function onSearch(r) {
   refs.loadMoreBtn.classList.add('visually-hidden');
-  Notify.info(`Hooray! We found ${r.data.totalHits} images.`);
   imageApiService.resetHits();
   const images = r.data.hits;
   imageApiService.addHits(images);
   if (images.length === 0) {
-    Notify.failure(FAILURE_MESSAGE);
+    notification.showFailure();
   } else {
-    const markup = images.map(img => createImageMarkup(img)).join('');
+    notification.searchResult(r.data.totalHits);
+    const markup = createGroupOfImagesMarkup(images);
     updateGallery(markup);
+    new SimpleLightbox('.gallery a');
     if (images.length !== r.data.totalHits) {
       refs.loadMoreBtn.classList.remove('visually-hidden');
     }
@@ -64,8 +62,10 @@ function onLoadMore(r) {
   const totalHits = imageApiService.totalHits;
   imageApiService.addHits(images);
   const filteredHits = imageApiService.filterHits(totalHits);
-  const markup = images.map(img => createImageMarkup(img)).join('');
+  const markup = createGroupOfImagesMarkup(images);
   updateGallery(markup);
+  let gallery = new SimpleLightbox('.gallery a');
+  gallery.refresh();
 
   const { height: cardHeight } = document
     .querySelector('.gallery')
@@ -77,7 +77,7 @@ function onLoadMore(r) {
   });
 
   if (filteredHits.length === r.data.totalHits) {
-    Notify.info("We're sorry, but you've reached the end of search results.");
+    notification.showEndOfSearch();
     refs.loadMoreBtn.classList.add('visually-hidden');
   }
 }
@@ -91,8 +91,8 @@ function createImageMarkup({
   comments,
   downloads,
 }) {
-  return `<a href="${largeImageURL}" class="gallery__link"><img class ="gallery__image" src="${webformatURL}" alt="${tags}" loading="lazy" /></a>
-  <div class="photo-card">
+  return `<div class="photo-card">
+  <a href="${largeImageURL}" class="gallery__link"><img class ="gallery__image" src="${webformatURL}" alt="${tags}" loading="lazy" /></a>
   <div class="info">
     <p class="info-item">
       <b>Likes: ${likes}</b>
@@ -108,6 +108,10 @@ function createImageMarkup({
     </p>
   </div>
 </div>`;
+}
+
+function createGroupOfImagesMarkup(images) {
+  return images.map(img => createImageMarkup(img)).join('');
 }
 
 function updateGallery(markup) {

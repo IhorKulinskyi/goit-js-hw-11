@@ -64,6 +64,7 @@ input {
   display: block;
   width: 100%;
   height: auto;
+  object-fit: contain;
 }
 
 .info {
@@ -71,6 +72,7 @@ input {
   justify-content: space-between;
   align-items: center;
   margin-top: 10px;
+  padding: 5px;
 }
 
 .btn-container {
@@ -87,6 +89,11 @@ input {
   color: aliceblue;
   border-radius: 3px;
   outline: none;
+  cursor: pointer;
+}
+
+.load-more:hover{
+  background-color: rgba(63, 87, 179,0.8);
 }
 
 .visually-hidden {

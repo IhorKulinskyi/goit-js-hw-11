@@ -47,7 +47,6 @@ function onSearch(r) {
   Notify.info(`Hooray! We found ${r.data.totalHits} images.`);
   imageApiService.resetHits();
   const images = r.data.hits;
-  console.log(r.data.totalHits === images.length);
   imageApiService.addHits(images);
   if (images.length === 0) {
     Notify.failure(FAILURE_MESSAGE);
@@ -92,8 +91,8 @@ function createImageMarkup({
   comments,
   downloads,
 }) {
-  return `<div class="photo-card">
-  <a href="${largeImageURL}" class="gallery__link"><img class ="gallery__image" src="${webformatURL}" alt="${tags}" loading="lazy" /></a>
+  return `<a href="${largeImageURL}" class="gallery__link"><img class ="gallery__image" src="${webformatURL}" alt="${tags}" loading="lazy" /></a>
+  <div class="photo-card">
   <div class="info">
     <p class="info-item">
       <b>Likes: ${likes}</b>

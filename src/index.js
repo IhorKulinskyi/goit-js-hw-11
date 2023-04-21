@@ -2,11 +2,11 @@ import ImageApiService from './js/ImageApiService';
 import NotificationApiService from './js/NotificationApiService';
 import SimpleLightbox from 'simplelightbox';
 import 'simplelightbox/dist/simple-lightbox.min.css';
+import InfiniteScroll from 'infinite-scroll';
 
 const refs = {
   searchForm: document.querySelector('.search-form'),
   gallery: document.querySelector('.gallery'),
-  loadMoreBtn: document.querySelector('.load-more'),
 };
 
 const notification = new NotificationApiService();
@@ -14,7 +14,6 @@ const notification = new NotificationApiService();
 const imageApiService = new ImageApiService();
 
 refs.searchForm.addEventListener('submit', onSearchBtnClick);
-refs.loadMoreBtn.addEventListener('click', onLoadMoreBtnClick);
 
 function onSearchBtnClick(e) {
   e.preventDefault();
@@ -29,18 +28,13 @@ function onSearchBtnClick(e) {
   }
 }
 
-async function onLoadMoreBtnClick() {
-  const res = await imageApiService.fetchImages();
-  onLoadMore(res);
-}
-
 async function searchImages() {
   const res = await imageApiService.fetchImages();
+  console.log(res.data);
   onSearch(res);
 }
 
 function onSearch(r) {
-  refs.loadMoreBtn.classList.add('visually-hidden');
   imageApiService.resetHits();
   const images = r.data.hits;
   imageApiService.addHits(images);
@@ -51,34 +45,21 @@ function onSearch(r) {
     const markup = createGroupOfImagesMarkup(images);
     updateGallery(markup);
     new SimpleLightbox('.gallery a');
-    if (images.length !== r.data.totalHits) {
-      refs.loadMoreBtn.classList.remove('visually-hidden');
-    }
-  }
-}
-
-function onLoadMore(r) {
-  const images = r.data.hits;
-  const totalHits = imageApiService.totalHits;
-  imageApiService.addHits(images);
-  const filteredHits = imageApiService.filterHits(totalHits);
-  const markup = createGroupOfImagesMarkup(images);
-  updateGallery(markup);
-  let gallery = new SimpleLightbox('.gallery a');
-  gallery.refresh();
-
-  const { height: cardHeight } = document
-    .querySelector('.gallery')
-    .firstElementChild.getBoundingClientRect();
-
-  window.scrollBy({
-    top: cardHeight * 2,
-    behavior: 'smooth',
-  });
-
-  if (filteredHits.length === r.data.totalHits) {
-    notification.showEndOfSearch();
-    refs.loadMoreBtn.classList.add('visually-hidden');
+    const infScroll = new InfiniteScroll(refs.gallery, {
+      path: function () {
+        return `${imageApiService.BASE_URL}?key=${imageApiService.API_KEY}&image_type=photo&orientation=horizontal&safesearch=true&page=${imageApiService.page}&per_page=40&q=${imageApiService.searchQuery}`;
+      },
+      append: '.photo-card',
+      history:'false',
+    });
+    infScroll.on('load', function (response) {
+      const newImages = response.hits;
+      imageApiService.addHits(newImages);
+      const newMarkup = createGroupOfImagesMarkup(newImages);
+      updateGallery(newMarkup);
+      imageApiService.page += 1;
+      new SimpleLightbox('.gallery a');
+    });
   }
 }
 

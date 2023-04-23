@@ -6,7 +6,6 @@ import 'simplelightbox/dist/simple-lightbox.min.css';
 const refs = {
   searchForm: document.querySelector('.search-form'),
   gallery: document.querySelector('.gallery'),
-  loadMoreBtn: document.querySelector('.load-more'),
 };
 
 const notification = new NotificationApiService();
@@ -14,7 +13,20 @@ const notification = new NotificationApiService();
 const imageApiService = new ImageApiService();
 
 refs.searchForm.addEventListener('submit', onSearchBtnClick);
-refs.loadMoreBtn.addEventListener('click', onLoadMoreBtnClick);
+
+let gallery = new SimpleLightbox('.gallery a');
+
+const infiniteObserver = new IntersectionObserver(
+  ([entry], observer) => {
+    if (entry.isIntersecting) {
+      observer.unobserve(entry.target);
+      onLoadMoreImages();
+    }
+  },
+  {
+    threshold: 0.8,
+  }
+);
 
 function onSearchBtnClick(e) {
   e.preventDefault();
@@ -29,7 +41,7 @@ function onSearchBtnClick(e) {
   }
 }
 
-async function onLoadMoreBtnClick() {
+async function onLoadMoreImages() {
   const res = await imageApiService.fetchImages();
   onLoadMore(res);
 }
@@ -40,7 +52,6 @@ async function searchImages() {
 }
 
 function onSearch(r) {
-  refs.loadMoreBtn.classList.add('visually-hidden');
   imageApiService.resetHits();
   const images = r.data.hits;
   imageApiService.addHits(images);
@@ -50,9 +61,10 @@ function onSearch(r) {
     notification.searchResult(r.data.totalHits);
     const markup = createGroupOfImagesMarkup(images);
     updateGallery(markup);
-    new SimpleLightbox('.gallery a');
+    gallery.refresh();
     if (images.length !== r.data.totalHits) {
-      refs.loadMoreBtn.classList.remove('visually-hidden');
+      const lastCard = document.querySelector('.photo-card:last-child');
+      infiniteObserver.observe(lastCard);
     }
   }
 }
@@ -64,7 +76,6 @@ function onLoadMore(r) {
   const filteredHits = imageApiService.filterHits(totalHits);
   const markup = createGroupOfImagesMarkup(images);
   updateGallery(markup);
-  let gallery = new SimpleLightbox('.gallery a');
   gallery.refresh();
 
   const { height: cardHeight } = document
@@ -75,10 +86,12 @@ function onLoadMore(r) {
     top: cardHeight * 2,
     behavior: 'smooth',
   });
+  const lastCard = document.querySelector('.photo-card:last-child');
+  infiniteObserver.observe(lastCard);
 
   if (filteredHits.length === r.data.totalHits) {
     notification.showEndOfSearch();
-    refs.loadMoreBtn.classList.add('visually-hidden');
+    infiniteObserver.unobserve(lastCard);
   }
 }
 

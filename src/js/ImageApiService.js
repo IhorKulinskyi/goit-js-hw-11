@@ -5,21 +5,21 @@ export default class ImageApiService {
     this.searchQuery = '';
     this.page = 1;
     this.totalHits = [];
+    this.API_KEY = '35277582-b50a1a83cc1a7d3dd10451290';
+    this.BASE_URL='https://pixabay.com/api/';
   }
   async fetchImages() {
     try {
-      const BASE_URL = 'https://pixabay.com/api/';
-      const API_KEY = '35277582-b50a1a83cc1a7d3dd10451290';
       const params = {
         q: this.searchQuery,
-        key: API_KEY,
+        key: this.API_KEY,
         image_type: 'photo',
         orientation: 'horizontal',
         safesearch: 'true',
         page: this.page,
         per_page: 40,
       };
-      const response = await axios.get(`${BASE_URL}`, { params });
+      const response = await axios.get(`${this.BASE_URL}`, { params });
       this.page += 1;
       return response;
     } catch (error) {

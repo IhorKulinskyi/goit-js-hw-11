@@ -2,6 +2,7 @@ import ImageApiService from './js/ImageApiService';
 import NotificationApiService from './js/NotificationApiService';
 import SimpleLightbox from 'simplelightbox';
 import 'simplelightbox/dist/simple-lightbox.min.css';
+import InfiniteScroll from 'infinite-scroll';
 
 const refs = {
   searchForm: document.querySelector('.search-form'),
@@ -48,6 +49,7 @@ async function onLoadMoreImages() {
 
 async function searchImages() {
   const res = await imageApiService.fetchImages();
+  console.log(res.data);
   onSearch(res);
 }
 

@@ -1,5 +1,6 @@
 import ImageApiService from './js/ImageApiService';
 import NotificationApiService from './js/NotificationApiService';
+import createGroupOfImagesMarkup from './js/createMarkup';
 import SimpleLightbox from 'simplelightbox';
 import 'simplelightbox/dist/simple-lightbox.min.css';
 import './js/btn-up';
@@ -9,8 +10,6 @@ const refs = {
   gallery: document.querySelector('.gallery'),
   spinner: document.querySelector('.spinner'),
 };
-
-console.log(refs.spinner);
 
 const notification = new NotificationApiService();
 
@@ -63,6 +62,7 @@ function onSearch(r) {
   const images = r.data.hits;
   imageApiService.addHits(images);
   if (images.length === 0) {
+    refs.spinner.classList.add('visually-hidden');
     notification.showFailure();
   } else {
     notification.searchResult(r.data.totalHits);
@@ -103,38 +103,6 @@ function onLoadMore(r) {
     refs.spinner.classList.add('visually-hidden');
     infiniteObserver.unobserve(lastCard);
   }
-}
-
-function createImageMarkup({
-  webformatURL,
-  largeImageURL,
-  tags,
-  likes,
-  views,
-  comments,
-  downloads,
-}) {
-  return `<div class="photo-card">
-  <a href="${largeImageURL}" class="gallery__link"><img class ="gallery__image" src="${webformatURL}" alt="${tags}" loading="lazy" /></a>
-  <div class="info">
-    <p class="info-item">
-      <b>Likes: ${likes}</b>
-    </p>
-    <p class="info-item">
-      <b>Views: ${views}</b>
-    </p>
-    <p class="info-item">
-      <b>Comments: ${comments}</b>
-    </p>
-    <p class="info-item">
-      <b>Downloads: ${downloads}</b>
-    </p>
-  </div>
-</div>`;
-}
-
-function createGroupOfImagesMarkup(images) {
-  return images.map(img => createImageMarkup(img)).join('');
 }
 
 function updateGallery(markup) {

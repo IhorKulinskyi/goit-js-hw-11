@@ -2,11 +2,15 @@ import ImageApiService from './js/ImageApiService';
 import NotificationApiService from './js/NotificationApiService';
 import SimpleLightbox from 'simplelightbox';
 import 'simplelightbox/dist/simple-lightbox.min.css';
+import './js/btn-up';
 
 const refs = {
   searchForm: document.querySelector('.search-form'),
   gallery: document.querySelector('.gallery'),
+  spinner: document.querySelector('.spinner'),
 };
+
+console.log(refs.spinner);
 
 const notification = new NotificationApiService();
 
@@ -20,7 +24,9 @@ const infiniteObserver = new IntersectionObserver(
   ([entry], observer) => {
     if (entry.isIntersecting) {
       observer.unobserve(entry.target);
-      onLoadMoreImages();
+      // to show spinner
+      setTimeout(onLoadMoreImages, 1000);
+      // onLoadMoreImages();
     }
   },
   {
@@ -48,6 +54,7 @@ async function onLoadMoreImages() {
 
 async function searchImages() {
   const res = await imageApiService.fetchImages();
+  refs.spinner.classList.remove('visually-hidden');
   onSearch(res);
 }
 
@@ -62,9 +69,11 @@ function onSearch(r) {
     const markup = createGroupOfImagesMarkup(images);
     updateGallery(markup);
     gallery.refresh();
+    refs.spinner.classList.add('visually-hidden');
     if (images.length !== r.data.totalHits) {
       const lastCard = document.querySelector('.photo-card:last-child');
       infiniteObserver.observe(lastCard);
+      refs.spinner.classList.remove('visually-hidden');
     }
   }
 }
@@ -91,6 +100,7 @@ function onLoadMore(r) {
 
   if (filteredHits.length === r.data.totalHits) {
     notification.showEndOfSearch();
+    refs.spinner.classList.add('visually-hidden');
     infiniteObserver.unobserve(lastCard);
   }
 }

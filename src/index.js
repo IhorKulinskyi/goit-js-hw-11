@@ -2,11 +2,11 @@ import ImageApiService from './js/ImageApiService';
 import NotificationApiService from './js/NotificationApiService';
 import SimpleLightbox from 'simplelightbox';
 import 'simplelightbox/dist/simple-lightbox.min.css';
-import InfiniteScroll from 'infinite-scroll';
 
 const refs = {
   searchForm: document.querySelector('.search-form'),
   gallery: document.querySelector('.gallery'),
+  loadMoreBtn: document.querySelector('.load-more'),
 };
 
 const notification = new NotificationApiService();
@@ -14,20 +14,9 @@ const notification = new NotificationApiService();
 const imageApiService = new ImageApiService();
 
 refs.searchForm.addEventListener('submit', onSearchBtnClick);
+refs.loadMoreBtn.addEventListener('click', onLoadMoreBtnClick);
 
 let gallery = new SimpleLightbox('.gallery a');
-
-const infiniteObserver = new IntersectionObserver(
-  ([entry], observer) => {
-    if (entry.isIntersecting) {
-      observer.unobserve(entry.target);
-      onLoadMoreImages();
-    }
-  },
-  {
-    threshold: 0.8,
-  }
-);
 
 function onSearchBtnClick(e) {
   e.preventDefault();
@@ -42,18 +31,18 @@ function onSearchBtnClick(e) {
   }
 }
 
-async function onLoadMoreImages() {
+async function onLoadMoreBtnClick() {
   const res = await imageApiService.fetchImages();
   onLoadMore(res);
 }
 
 async function searchImages() {
   const res = await imageApiService.fetchImages();
-  console.log(res.data);
   onSearch(res);
 }
 
 function onSearch(r) {
+  refs.loadMoreBtn.classList.add('visually-hidden');
   imageApiService.resetHits();
   const images = r.data.hits;
   imageApiService.addHits(images);
@@ -65,8 +54,7 @@ function onSearch(r) {
     updateGallery(markup);
     gallery.refresh();
     if (images.length !== r.data.totalHits) {
-      const lastCard = document.querySelector('.photo-card:last-child');
-      infiniteObserver.observe(lastCard);
+      refs.loadMoreBtn.classList.remove('visually-hidden');
     }
   }
 }
@@ -88,12 +76,10 @@ function onLoadMore(r) {
     top: cardHeight * 2,
     behavior: 'smooth',
   });
-  const lastCard = document.querySelector('.photo-card:last-child');
-  infiniteObserver.observe(lastCard);
 
   if (filteredHits.length === r.data.totalHits) {
     notification.showEndOfSearch();
-    infiniteObserver.unobserve(lastCard);
+    refs.loadMoreBtn.classList.add('visually-hidden');
   }
 }
 
